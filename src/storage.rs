@@ -59,7 +59,7 @@ impl Storage {
         for line in reader.lines() {
             let line = line.unwrap();
 
-            let parts: Vec<&str> = line.splitn(3, ' ').collect();
+            let parts: Vec<&str> = line.splitn(4, ' ').collect();
 
             match parts.as_slice() {
                 [seq, "SET", key, value] => {
@@ -78,6 +78,9 @@ impl Storage {
 
                 _ => {}
             }
+
         }
+
+        self.next_seq = max_seq + 1;
     }
 }
