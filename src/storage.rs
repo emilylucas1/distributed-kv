@@ -28,26 +28,45 @@ impl Storage {
         storage
     }
 
-    pub fn set(&mut self, key: String, value: String) {
-        writeln!(self.log, "{} SET {} {}", self.next_seq, key, value).unwrap();
+    pub fn set(&mut self, key: String, value: String) -> u64 {
+        let seq = self.next_seq;
+    
+        writeln!(
+            self.log,
+            "{} SET {} {}",
+            seq,
+            key,
+            value
+        ).unwrap();
+    
         self.log.flush().unwrap();
-
+    
         self.data.insert(key, value);
         self.next_seq += 1;
+    
+        seq
     }
 
     pub fn get(&self, key: &str) -> Option<&String> {
         self.data.get(key)
     }
 
-    pub fn delete(&mut self, key: &str) {
-        writeln!(self.log, "{} DELETE {}", self.next_seq, key).unwrap();
+    pub fn delete(&mut self, key: &str) -> u64 {
+        let seq = self.next_seq;
+    
+        writeln!(
+            self.log,
+            "{} DELETE {}",
+            seq,
+            key
+        ).unwrap();
+    
         self.log.flush().unwrap();
-
-        
-
+    
         self.data.remove(key);
         self.next_seq += 1;
+    
+        seq
     }
 
     fn recover(&mut self) {
@@ -82,5 +101,47 @@ impl Storage {
         }
 
         self.next_seq = max_seq + 1;
+    }
+
+    pub fn apply_replicated_set(
+        &mut self,
+        seq: u64,
+        key: String,
+        value: String,
+    ) {
+        writeln!(
+            self.log,
+            "{} SET {} {}",
+            seq,
+            key,
+            value
+        )
+        .unwrap();
+    
+        self.log.flush().unwrap();
+    
+        self.data.insert(key, value);
+    
+        self.next_seq = self.next_seq.max(seq + 1);
+    }
+
+    pub fn apply_replicated_delete(
+        &mut self,
+        seq: u64,
+        key: &str,
+    ) {
+        writeln!(
+            self.log,
+            "{} DELETE {}",
+            seq,
+            key
+        )
+        .unwrap();
+    
+        self.log.flush().unwrap();
+    
+        self.data.remove(key);
+    
+        self.next_seq = self.next_seq.max(seq + 1);
     }
 }

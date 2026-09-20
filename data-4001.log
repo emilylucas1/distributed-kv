@@ -1,2 +1,4 @@
-1 SET name Bella
-2 SET age 18
+1 SET name Emily
+2 SET age 20
+3 SET city Austin
+4 DELETE age
