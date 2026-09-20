@@ -54,16 +54,26 @@ fn handle_client(mut stream: TcpStream, store: Store) {
     }
 }
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:4000").unwrap();
+    let args: Vec<String> = std::env::args().collect();
 
-    let store: Store = Arc::new(Mutex::new(Storage::new("data.log")));
+    let port = if args.len() > 1 {
+        &args[1]
+    } else {
+        "4000"
+    };
 
-    println!("Server listening on 127.0.0.1:4000");
+    let address = format!("127.0.0.1:{}", port);
+
+    let listener = TcpListener::bind(&address).unwrap();
+
+    let log_path = format!("data-{}.log", port);
+
+    let store: Store = Arc::new(Mutex::new(Storage::new(&log_path)));
+
+    println!("Server listening on {}", address);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-
-        // give each client a reference to the hashmap
         let store = Arc::clone(&store);
 
         std::thread::spawn(move || {
