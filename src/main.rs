@@ -57,11 +57,17 @@ fn handle_replication(parts: &[&str], store: &Store) -> String {
     }
 }
 
-fn send_to_node(address: &str, message: &str) -> std::io::Result<()> {
+fn send_to_node(address: &str, message: &str) -> std::io::Result<String> {
     let mut stream = TcpStream::connect(address)?;
+
     stream.write_all(message.as_bytes())?;
 
-    Ok(())
+    let mut reader = BufReader::new(stream);
+    let mut response = String::new();
+
+    reader.read_line(&mut response)?;
+
+    Ok(response)
 }
 
 fn handle_client(mut stream: TcpStream, store: Store, peer_address: Option<String>,) {
@@ -91,10 +97,19 @@ fn handle_client(mut stream: TcpStream, store: Store, peer_address: Option<Strin
                         "REPLICATE {} SET {} {}\n",
                         seq, key, value
                     );
-            
-                    if let Err(error) = send_to_node(peer, &message) {
-                        eprintln!("Replication failed: {}", error);
-                        return;
+                
+                    match send_to_node(peer, &message) {
+                        Ok(response) if response.trim() == "OK" => {
+                            println!("Replication successful: seq={}", seq);
+                        }
+                        Ok(response) => {
+                            eprintln!("Replication failed: {}", response.trim());
+                            return;
+                        }
+                        Err(error) => {
+                            eprintln!("Replication failed: {}", error);
+                            return;
+                        }
                     }
                 }
             
@@ -122,9 +137,18 @@ fn handle_client(mut stream: TcpStream, store: Store, peer_address: Option<Strin
                         seq, key
                     );
             
-                    if let Err(error) = send_to_node(peer, &message) {
-                        eprintln!("Replication failed: {}", error);
-                        return;
+                    match send_to_node(peer, &message) {
+                        Ok(response) if response.trim() == "OK" => {
+                            println!("Replication successful: seq={}", seq);
+                        }
+                        Ok(response) => {
+                            eprintln!("Replication failed: {}", response.trim());
+                            return;
+                        }
+                        Err(error) => {
+                            eprintln!("Replication failed: {}", error);
+                            return;
+                        }
                     }
                 }
             
