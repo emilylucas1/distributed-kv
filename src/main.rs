@@ -97,23 +97,24 @@ fn handle_client(mut stream: TcpStream, store: Store, peer_address: Option<Strin
                         "REPLICATE {} SET {} {}\n",
                         seq, key, value
                     );
-                
+            
                     match send_to_node(peer, &message) {
                         Ok(response) if response.trim() == "OK" => {
                             println!("Replication successful: seq={}", seq);
+                            "OK\n".to_string()
                         }
                         Ok(response) => {
                             eprintln!("Replication failed: {}", response.trim());
-                            return;
+                            "ERROR\n".to_string()
                         }
                         Err(error) => {
                             eprintln!("Replication failed: {}", error);
-                            return;
+                            "ERROR\n".to_string()
                         }
                     }
+                } else {
+                    "OK\n".to_string()
                 }
-            
-                "OK\n".to_string()
             }
 
             ["GET", key] => {
@@ -140,19 +141,20 @@ fn handle_client(mut stream: TcpStream, store: Store, peer_address: Option<Strin
                     match send_to_node(peer, &message) {
                         Ok(response) if response.trim() == "OK" => {
                             println!("Replication successful: seq={}", seq);
+                            "OK\n".to_string()
                         }
                         Ok(response) => {
                             eprintln!("Replication failed: {}", response.trim());
-                            return;
+                            "ERROR\n".to_string()
                         }
                         Err(error) => {
                             eprintln!("Replication failed: {}", error);
-                            return;
+                            "ERROR\n".to_string()
                         }
                     }
+                } else {
+                    "OK\n".to_string()
                 }
-            
-                "OK\n".to_string()
             }
 
             ["REPLICATE", ..] => {
